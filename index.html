@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>App Foco</title>
+</head>
+<body>
+  <h1>Foco Timer</h1>
+  <button onclick="iniciar()">Começar</button>
+  <p id="tempo">25:00</p>
+
+  <script>
+    let tempo = 1500;
+
+    function iniciar() {
+      setInterval(() => {
+        tempo--;
+        let min = Math.floor(tempo / 60);
+        let sec = tempo % 60;
+        document.getElementById("tempo").innerText =
+          min + ":" + (sec < 10 ? "0" : "") + sec;
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
