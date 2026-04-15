@@ -3,18 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mission Focus</title>
+<title>Mission Control</title>
 
 <style>
-body {
+* {
   margin:0;
-  font-family:Arial;
-  background: radial-gradient(circle at bottom, #020617, #000);
-  color:white;
-  overflow-x:hidden;
+  padding:0;
+  box-sizing:border-box;
+  font-family: 'Segoe UI', sans-serif;
 }
 
-/* ESTRELAS */
+body {
+  background: radial-gradient(circle at center, #020617, #000);
+  color: #e2e8f0;
+  overflow:hidden;
+}
+
+/* FUNDO ESTRELAS */
 canvas {
   position:fixed;
   top:0;
@@ -24,62 +29,66 @@ canvas {
 
 /* CONTAINER */
 .container {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+}
+
+/* CARD PRINCIPAL */
+.panel {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(20px);
+  border:1px solid rgba(255,255,255,0.1);
+  padding:30px;
+  border-radius:25px;
+  width:320px;
   text-align:center;
-  padding:40px 20px;
+  box-shadow: 0 0 40px rgba(0,255,255,0.1);
+  animation: fadeIn 1s ease;
+}
+
+@keyframes fadeIn {
+  from {opacity:0; transform:translateY(20px);}
+  to {opacity:1;}
 }
 
 /* TÍTULO */
 h1 {
-  font-size:32px;
   letter-spacing:2px;
-}
-
-/* CARD */
-.card {
-  background: rgba(255,255,255,0.05);
-  padding:20px;
-  margin:20px auto;
-  width:300px;
-  border-radius:20px;
-  backdrop-filter: blur(10px);
+  margin-bottom:10px;
 }
 
 /* TIMER */
 #tempo {
-  font-size:60px;
-  margin:20px;
+  font-size:70px;
+  margin:20px 0;
+  text-shadow:0 0 20px #0ea5e9;
 }
 
 /* BOTÕES */
 button {
-  padding:10px 20px;
   margin:5px;
+  padding:10px 20px;
   border:none;
   border-radius:10px;
   background:#0ea5e9;
   color:white;
   cursor:pointer;
+  transition:0.3s;
 }
 
 button:hover {
+  box-shadow:0 0 15px #0ea5e9;
+  transform:scale(1.05);
+}
+
+/* TEXTO */
+.status {
+  margin-top:10px;
+  font-size:14px;
   opacity:0.8;
-}
-
-/* INPUT */
-input {
-  padding:8px;
-  border-radius:8px;
-  border:none;
-}
-
-/* LISTA */
-li {
-  margin:5px;
-  cursor:pointer;
-}
-
-.selected {
-  color:#0ea5e9;
 }
 
 </style>
@@ -90,71 +99,58 @@ li {
 <canvas id="stars"></canvas>
 
 <div class="container">
+  <div class="panel">
+    <h1>🚀 MISSION CONTROL</h1>
+    <div id="tempo">25:00</div>
 
-<h1>🚀 MISSION FOCUS</h1>
+    <button onclick="start()">Iniciar</button>
+    <button onclick="pause()">Pausar</button>
+    <button onclick="reset()">Resetar</button>
 
-<div class="card">
-<div id="tempo">25:00</div>
-
-<button onclick="start()">Iniciar</button>
-<button onclick="pause()">Pausar</button>
-<button onclick="reset()">Resetar</button>
-
-<p id="status"></p>
-</div>
-
-<div class="card">
-<h3>📋 Missões</h3>
-<input id="taskInput" placeholder="Nova missão">
-<button onclick="addTask()">+</button>
-<ul id="list"></ul>
-<p>🎯 Atual: <span id="currentTask">Nenhuma</span></p>
-</div>
-
+    <div class="status" id="status">Sistema pronto</div>
+  </div>
 </div>
 
 <script>
 // TIMER
-let time=1500,interval,task="";
+let time = 1500;
+let interval;
+
 function update(){
- let m=Math.floor(time/60),s=time%60;
- document.getElementById("tempo").innerText=
- m+":"+(s<10?"0":"")+s;
+  let m=Math.floor(time/60);
+  let s=time%60;
+  document.getElementById("tempo").innerText =
+    m+":"+(s<10?"0":"")+s;
 }
 
 function start(){
- if(interval)return;
- document.getElementById("status").innerText=
- "Missão ativa: "+(task||"Nenhuma");
- interval=setInterval(()=>{
-  if(time>0){time--;update();}
-  else{
-   clearInterval(interval);
-   interval=null;
-   alert("Missão concluída 🚀");
-   time=1500;
-  }
- },1000);
+  if(interval) return;
+  document.getElementById("status").innerText="Missão em andamento...";
+  interval=setInterval(()=>{
+    if(time>0){
+      time--;
+      update();
+    } else {
+      clearInterval(interval);
+      interval=null;
+      document.getElementById("status").innerText="Missão concluída 🚀";
+    }
+  },1000);
 }
 
-function pause(){clearInterval(interval);interval=null;}
-function reset(){time=1500;update();pause();}
-
-// TAREFAS
-function addTask(){
- let val=document.getElementById("taskInput").value;
- let li=document.createElement("li");
- li.textContent=val;
-
- li.onclick=()=>{
-  task=val;
-  document.getElementById("currentTask").innerText=val;
- };
-
- document.getElementById("list").appendChild(li);
+function pause(){
+  clearInterval(interval);
+  interval=null;
+  document.getElementById("status").innerText="Pausado";
 }
 
-// ESTRELAS
+function reset(){
+  time=1500;
+  update();
+  pause();
+}
+
+// ESTRELAS ANIMADAS
 const canvas=document.getElementById("stars");
 const ctx=canvas.getContext("2d");
 
@@ -162,27 +158,32 @@ canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
 
 let stars=[];
-for(let i=0;i<100;i++){
- stars.push({
-  x:Math.random()*canvas.width,
-  y:Math.random()*canvas.height,
-  r:Math.random()*2
- });
+for(let i=0;i<200;i++){
+  stars.push({
+    x:Math.random()*canvas.width,
+    y:Math.random()*canvas.height,
+    r:Math.random()*2,
+    v:Math.random()*0.5
+  });
 }
 
 function draw(){
- ctx.clearRect(0,0,canvas.width,canvas.height);
- ctx.fillStyle="white";
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle="white";
 
- stars.forEach(s=>{
-  ctx.beginPath();
-  ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-  ctx.fill();
- });
+  stars.forEach(s=>{
+    s.y+=s.v;
+    if(s.y>canvas.height) s.y=0;
+
+    ctx.beginPath();
+    ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fill();
+  });
+
+  requestAnimationFrame(draw);
 }
 
-setInterval(draw,50);
-
+draw();
 update();
 </script>
 
