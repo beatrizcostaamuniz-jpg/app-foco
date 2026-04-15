@@ -1,25 +1,90 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>App Foco</title>
+  <meta charset="UTF-8">
+  <title>Foco Timer</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      background-color: #f2f2f2;
+      padding-top: 50px;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    #tempo {
+      font-size: 60px;
+      margin: 20px;
+    }
+
+    button {
+      font-size: 20px;
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 10px;
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
 </head>
+
 <body>
-  <h1>Foco Timer</h1>
-  <button onclick="iniciar()">Começar</button>
+
+  <h1>⏱️ Foco Timer</h1>
+
   <p id="tempo">25:00</p>
+
+  <button onclick="iniciar()">Começar</button>
+  <button onclick="pausar()">Pausar</button>
+  <button onclick="resetar()">Resetar</button>
 
   <script>
     let tempo = 1500;
+    let intervalo;
+
+    function atualizarTela() {
+      let min = Math.floor(tempo / 60);
+      let sec = tempo % 60;
+
+      document.getElementById("tempo").innerText =
+        min + ":" + (sec < 10 ? "0" : "") + sec;
+    }
 
     function iniciar() {
-      setInterval(() => {
-        tempo--;
-        let min = Math.floor(tempo / 60);
-        let sec = tempo % 60;
-        document.getElementById("tempo").innerText =
-          min + ":" + (sec < 10 ? "0" : "") + sec;
+      if (intervalo) return;
+
+      intervalo = setInterval(() => {
+        if (tempo > 0) {
+          tempo--;
+          atualizarTela();
+        } else {
+          clearInterval(intervalo);
+          intervalo = null;
+          alert("Tempo acabou! Hora da pausa 😄");
+        }
       }, 1000);
     }
+
+    function pausar() {
+      clearInterval(intervalo);
+      intervalo = null;
+    }
+
+    function resetar() {
+      tempo = 1500;
+      atualizarTela();
+      pausar();
+    }
   </script>
+
 </body>
 </html>
