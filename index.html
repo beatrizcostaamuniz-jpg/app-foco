@@ -3,216 +3,187 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Focus Master PRO</title>
+<title>Mission Focus</title>
 
 <style>
 body {
-  font-family: Arial;
-  background: #0f172a;
-  color: white;
-  margin: 0;
-  padding: 20px;
+  margin:0;
+  font-family:Arial;
+  background: radial-gradient(circle at bottom, #020617, #000);
+  color:white;
+  overflow-x:hidden;
 }
 
+/* ESTRELAS */
+canvas {
+  position:fixed;
+  top:0;
+  left:0;
+  z-index:-1;
+}
+
+/* CONTAINER */
+.container {
+  text-align:center;
+  padding:40px 20px;
+}
+
+/* TÍTULO */
 h1 {
-  text-align: center;
+  font-size:32px;
+  letter-spacing:2px;
 }
 
+/* CARD */
 .card {
-  background: #1e293b;
-  padding: 20px;
-  border-radius: 15px;
-  margin-bottom: 20px;
+  background: rgba(255,255,255,0.05);
+  padding:20px;
+  margin:20px auto;
+  width:300px;
+  border-radius:20px;
+  backdrop-filter: blur(10px);
 }
 
-button {
-  padding: 8px 15px;
-  margin: 5px;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.start { background: #22c55e; }
-.pause { background: #facc15; }
-.reset { background: #ef4444; }
-
+/* TIMER */
 #tempo {
-  font-size: 50px;
-  text-align: center;
+  font-size:60px;
+  margin:20px;
 }
 
+/* BOTÕES */
+button {
+  padding:10px 20px;
+  margin:5px;
+  border:none;
+  border-radius:10px;
+  background:#0ea5e9;
+  color:white;
+  cursor:pointer;
+}
+
+button:hover {
+  opacity:0.8;
+}
+
+/* INPUT */
 input {
-  padding: 8px;
-  border-radius: 8px;
-  border: none;
-  margin-right: 5px;
+  padding:8px;
+  border-radius:8px;
+  border:none;
 }
 
+/* LISTA */
 li {
-  margin: 5px 0;
-  cursor: pointer;
+  margin:5px;
+  cursor:pointer;
 }
+
+.selected {
+  color:#0ea5e9;
+}
+
 </style>
 </head>
 
 <body>
 
-<h1>🚀 Focus Master PRO</h1>
+<canvas id="stars"></canvas>
+
+<div class="container">
+
+<h1>🚀 MISSION FOCUS</h1>
 
 <div class="card">
-  <h2>⏱️ Pomodoro</h2>
-  <div id="tempo">25:00</div>
-  <button class="start" onclick="start()">Começar</button>
-  <button class="pause" onclick="pause()">Pausar</button>
-  <button class="reset" onclick="reset()">Resetar</button>
+<div id="tempo">25:00</div>
 
-  <p id="modo"></p>
-  <p>🎯 Foco atual: <strong id="tarefaAtual">Nenhuma</strong></p>
+<button onclick="start()">Iniciar</button>
+<button onclick="pause()">Pausar</button>
+<button onclick="reset()">Resetar</button>
+
+<p id="status"></p>
 </div>
 
 <div class="card">
-  <h2>📋 Tarefas</h2>
-  <input id="tarefaInput" placeholder="Nova tarefa">
-  <button onclick="addTask()">Adicionar</button>
-  <ul id="lista"></ul>
+<h3>📋 Missões</h3>
+<input id="taskInput" placeholder="Nova missão">
+<button onclick="addTask()">+</button>
+<ul id="list"></ul>
+<p>🎯 Atual: <span id="currentTask">Nenhuma</span></p>
 </div>
 
-<div class="card">
-  <h2>🎯 Meta do dia</h2>
-  <input id="metaInput" placeholder="Ex: estudar 2h">
-  <button onclick="salvarMeta()">Salvar</button>
-  <p id="meta"></p>
 </div>
-
-<div class="card">
-  <h2>📊 Progresso</h2>
-  <p>Sessões concluídas: <span id="sessoes">0</span></p>
-</div>
-
-<audio id="som">
-  <source src="https://www.soundjay.com/buttons/sounds/button-3.mp3">
-</audio>
 
 <script>
-let tempo = 1500;
-let intervalo;
-let modo = "foco";
-let tarefaSelecionada = "";
-
-let sessoes = localStorage.getItem("sessoes") || 0;
-document.getElementById("sessoes").innerText = sessoes;
-
 // TIMER
-function atualizar() {
-  let min = Math.floor(tempo/60);
-  let sec = tempo%60;
-  document.getElementById("tempo").innerText =
-    min + ":" + (sec<10?"0":"")+sec;
+let time=1500,interval,task="";
+function update(){
+ let m=Math.floor(time/60),s=time%60;
+ document.getElementById("tempo").innerText=
+ m+":"+(s<10?"0":"")+s;
 }
 
 function start(){
-  if(intervalo) return;
-
-  document.getElementById("modo").innerText =
-    "Focando em: " + (tarefaSelecionada || "Nenhuma");
-
-  intervalo = setInterval(()=>{
-    if(tempo>0){
-      tempo--;
-      atualizar();
-    } else {
-      clearInterval(intervalo);
-      intervalo=null;
-      document.getElementById("som").play();
-
-      if(modo=="foco"){
-        modo="pausa";
-        tempo=300;
-        sessoes++;
-        localStorage.setItem("sessoes",sessoes);
-      } else {
-        modo="foco";
-        tempo=1500;
-      }
-
-      document.getElementById("sessoes").innerText=sessoes;
-      atualizar();
-    }
-  },1000);
+ if(interval)return;
+ document.getElementById("status").innerText=
+ "Missão ativa: "+(task||"Nenhuma");
+ interval=setInterval(()=>{
+  if(time>0){time--;update();}
+  else{
+   clearInterval(interval);
+   interval=null;
+   alert("Missão concluída 🚀");
+   time=1500;
+  }
+ },1000);
 }
 
-function pause(){
-  clearInterval(intervalo);
-  intervalo=null;
-}
-
-function reset(){
-  tempo=1500;
-  modo="foco";
-  atualizar();
-  pause();
-  document.getElementById("modo").innerText="";
-}
+function pause(){clearInterval(interval);interval=null;}
+function reset(){time=1500;update();pause();}
 
 // TAREFAS
 function addTask(){
-  let input=document.getElementById("tarefaInput");
-  let lista=document.getElementById("lista");
+ let val=document.getElementById("taskInput").value;
+ let li=document.createElement("li");
+ li.textContent=val;
 
-  let li=document.createElement("li");
-  li.textContent=input.value;
+ li.onclick=()=>{
+  task=val;
+  document.getElementById("currentTask").innerText=val;
+ };
 
-  li.onclick=function(){
-    selecionarTarefa(li.textContent);
-  };
-
-  lista.appendChild(li);
-  salvarTarefas();
-  input.value="";
+ document.getElementById("list").appendChild(li);
 }
 
-function selecionarTarefa(tarefa){
-  tarefaSelecionada=tarefa;
-  document.getElementById("tarefaAtual").innerText=tarefa;
+// ESTRELAS
+const canvas=document.getElementById("stars");
+const ctx=canvas.getContext("2d");
+
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+
+let stars=[];
+for(let i=0;i<100;i++){
+ stars.push({
+  x:Math.random()*canvas.width,
+  y:Math.random()*canvas.height,
+  r:Math.random()*2
+ });
 }
 
-function salvarTarefas(){
-  let tarefas=[];
-  document.querySelectorAll("#lista li").forEach(li=>{
-    tarefas.push(li.textContent);
-  });
-  localStorage.setItem("tarefas",JSON.stringify(tarefas));
+function draw(){
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ ctx.fillStyle="white";
+
+ stars.forEach(s=>{
+  ctx.beginPath();
+  ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+  ctx.fill();
+ });
 }
 
-function carregarTarefas(){
-  let tarefas=JSON.parse(localStorage.getItem("tarefas")||"[]");
-  tarefas.forEach(t=>{
-    let li=document.createElement("li");
-    li.textContent=t;
-    li.onclick=function(){
-      selecionarTarefa(t);
-    };
-    document.getElementById("lista").appendChild(li);
-  });
-}
+setInterval(draw,50);
 
-// META
-function salvarMeta(){
-  let valor=document.getElementById("metaInput").value;
-  localStorage.setItem("meta",valor);
-  document.getElementById("meta").innerText=valor;
-}
-
-function carregarMeta(){
-  document.getElementById("meta").innerText=
-    localStorage.getItem("meta")||"";
-}
-
-// INIT
-atualizar();
-carregarTarefas();
-carregarMeta();
+update();
 </script>
 
 </body>
