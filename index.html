@@ -3,95 +3,64 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NeuroFocus</title>
+<title>Mission Control PRO</title>
 
 <style>
-:root {
-  --primary: #00f5ff;
-  --bg: #020617;
-  --card: rgba(255,255,255,0.05);
-}
-
-* {
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family: 'Segoe UI', sans-serif;
-}
-
 body {
-  background: radial-gradient(circle at center, #020617, #000);
+  margin:0;
+  font-family:Arial;
+  background:#020617;
   color:white;
-  overflow:hidden;
 }
 
-/* FUNDO */
-canvas {
-  position:fixed;
-  top:0;
-  left:0;
-  z-index:-1;
-}
-
-/* APP */
-.app {
-  display:flex;
-  flex-direction:column;
-  height:100vh;
-}
-
-/* HEADER */
-.header {
-  text-align:center;
-  padding:15px;
-  font-size:20px;
-  letter-spacing:2px;
-}
-
-/* CONTEÚDO */
-.content {
-  flex:1;
-  display:flex;
-  justify-content:center;
-  align-items:center;
+.container {
+  max-width:400px;
+  margin:auto;
+  padding-bottom:80px;
 }
 
 .card {
-  background: var(--card);
-  backdrop-filter: blur(20px);
-  border-radius:20px;
-  padding:20px;
-  width:320px;
-  text-align:center;
-  box-shadow:0 0 30px rgba(0,255,255,0.1);
+  background:#1e293b;
+  margin:10px;
+  padding:15px;
+  border-radius:15px;
 }
 
 /* TIMER */
-.timer {
-  font-size:60px;
-  margin:20px 0;
-  text-shadow:0 0 20px var(--primary);
+#tempo {
+  font-size:50px;
+  text-align:center;
 }
 
 /* BOTÕES */
 button {
+  padding:8px;
   margin:5px;
-  padding:10px 20px;
   border:none;
-  border-radius:10px;
-  background:var(--primary);
-  color:black;
-  cursor:pointer;
-  transition:0.3s;
+  border-radius:8px;
 }
 
-button:hover {
-  transform:scale(1.1);
-  box-shadow:0 0 15px var(--primary);
+.start{background:#22c55e;}
+.pause{background:#facc15;}
+.reset{background:#ef4444;}
+
+/* MISSÕES */
+.mission {
+  padding:10px;
+  margin:5px 0;
+  border-radius:10px;
+  background:#334155;
 }
+
+.active { background:#0ea5e9; }
+.done { background:#16a34a; }
 
 /* NAV */
 .nav {
+  position:fixed;
+  bottom:0;
+  width:100%;
+  max-width:400px;
   display:flex;
   background:#020617;
 }
@@ -101,93 +70,83 @@ button:hover {
   background:none;
   color:white;
 }
-
-/* LISTA */
-li {
-  padding:8px;
-  margin:5px 0;
-  background:#1e293b;
-  border-radius:8px;
-  cursor:pointer;
-}
-
-.selected {
-  background:var(--primary);
-  color:black;
-}
-
 </style>
 </head>
 
 <body>
 
-<canvas id="bg"></canvas>
+<div class="container">
 
-<div class="app">
-
-<div class="header">🚀 NEURO FOCUS</div>
-
-<div class="content">
-
+<!-- TIMER -->
 <div id="home" class="card">
-<div class="timer" id="time">25:00</div>
+<h2>⏱️ Sistema de Foco</h2>
+<div id="tempo">25:00</div>
 
-<button onclick="start()">Start</button>
-<button onclick="pause()">Pause</button>
-<button onclick="reset()">Reset</button>
+<button class="start" onclick="start()">Start</button>
+<button class="pause" onclick="pause()">Pause</button>
+<button class="reset" onclick="reset()">Reset</button>
 
 <p id="status"></p>
 </div>
 
-<div id="tasks" class="card" style="display:none">
-<input id="taskInput" placeholder="Nova tarefa">
-<button onclick="addTask()">+</button>
-<ul id="list"></ul>
+<!-- MISSÕES -->
+<div id="missions" class="card" style="display:none">
+<h2>🎯 Missões</h2>
+
+<input id="missionInput" placeholder="Nova missão">
+<button onclick="addMission()">Criar</button>
+
+<div id="missionList"></div>
 </div>
 
-<div id="stats" class="card" style="display:none">
-<h3>📊 Dashboard</h3>
-<p>Sessões: <span id="sessions">0</span></p>
-<p>Tarefa atual: <span id="currentTask">Nenhuma</span></p>
+<!-- DASHBOARD -->
+<div id="dashboard" class="card" style="display:none">
+<h2>📊 Dashboard</h2>
+<p>Total de sessões: <span id="sessions">0</span></p>
+<p>Missão ativa: <span id="currentMission">Nenhuma</span></p>
+<p>Missões concluídas: <span id="doneCount">0</span></p>
 </div>
 
 </div>
 
+<!-- NAV -->
 <div class="nav">
 <button onclick="show('home')">⏱️</button>
-<button onclick="show('tasks')">📋</button>
-<button onclick="show('stats')">📊</button>
-</div>
-
+<button onclick="show('missions')">🎯</button>
+<button onclick="show('dashboard')">📊</button>
 </div>
 
 <script>
 // TIMER
 let time=1500,interval;
 let sessions=localStorage.getItem("sessions")||0;
-let currentTask="";
+let currentMission="";
 
 document.getElementById("sessions").innerText=sessions;
 
 function update(){
  let m=Math.floor(time/60),s=time%60;
- document.getElementById("time").innerText=
+ document.getElementById("tempo").innerText=
  m+":"+(s<10?"0":"")+s;
 }
 
 function start(){
- if(interval) return;
+ if(interval)return;
+
  document.getElementById("status").innerText=
- "Foco: "+(currentTask||"Nenhuma");
+ "Executando: "+(currentMission||"Nenhuma");
+
  interval=setInterval(()=>{
   if(time>0){time--;update();}
   else{
    clearInterval(interval);
    interval=null;
+
    sessions++;
    localStorage.setItem("sessions",sessions);
    document.getElementById("sessions").innerText=sessions;
-   alert("Sessão concluída 🚀");
+
+   marcarConcluida();
    time=1500;
   }
  },1000);
@@ -196,65 +155,67 @@ function start(){
 function pause(){clearInterval(interval);interval=null;}
 function reset(){time=1500;update();pause();}
 
-// TASKS
-function addTask(){
- let val=document.getElementById("taskInput").value;
- let li=document.createElement("li");
- li.textContent=val;
+// MISSÕES
+let missions=JSON.parse(localStorage.getItem("missions")||"[]");
 
- li.onclick=()=>{
-  currentTask=val;
-  document.getElementById("currentTask").innerText=val;
-  document.querySelectorAll("li").forEach(e=>e.classList.remove("selected"));
-  li.classList.add("selected");
- };
+function renderMissions(){
+ let container=document.getElementById("missionList");
+ container.innerHTML="";
 
- document.getElementById("list").appendChild(li);
+ let done=0;
+
+ missions.forEach((m,i)=>{
+  let div=document.createElement("div");
+  div.className="mission "+m.status;
+  div.innerText=m.nome;
+
+  if(m.status==="done") done++;
+
+  div.onclick=()=>{
+    missions.forEach(x=>x.status="");
+    m.status="active";
+    currentMission=m.nome;
+    document.getElementById("currentMission").innerText=m.nome;
+    save();
+    renderMissions();
+  };
+
+  container.appendChild(div);
+ });
+
+ document.getElementById("doneCount").innerText=done;
+}
+
+function addMission(){
+ let val=document.getElementById("missionInput").value;
+
+ missions.push({nome:val,status:""});
+ save();
+ renderMissions();
+}
+
+function marcarConcluida(){
+ let m=missions.find(x=>x.status==="active");
+ if(m){m.status="done";}
+ save();
+ renderMissions();
+}
+
+function save(){
+ localStorage.setItem("missions",JSON.stringify(missions));
 }
 
 // NAV
 function show(tab){
- ["home","tasks","stats"].forEach(t=>{
+ ["home","missions","dashboard"].forEach(t=>{
   document.getElementById(t).style.display="none";
  });
  document.getElementById(tab).style.display="block";
 }
 
-// BACKGROUND
-const c=document.getElementById("bg");
-const ctx=c.getContext("2d");
-
-c.width=window.innerWidth;
-c.height=window.innerHeight;
-
-let stars=[];
-for(let i=0;i<150;i++){
- stars.push({
-  x:Math.random()*c.width,
-  y:Math.random()*c.height,
-  r:Math.random()*2,
-  v:Math.random()*0.5
- });
-}
-
-function draw(){
- ctx.clearRect(0,0,c.width,c.height);
- ctx.fillStyle="white";
-
- stars.forEach(s=>{
-  s.y+=s.v;
-  if(s.y>c.height)s.y=0;
-
-  ctx.beginPath();
-  ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-  ctx.fill();
- });
-
- requestAnimationFrame(draw);
-}
-
-draw();
+// INIT
 update();
+renderMissions();
 </script>
 
 </body>
