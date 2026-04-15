@@ -3,9 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mission Control</title>
+<title>NeuroFocus</title>
 
 <style>
+:root {
+  --primary: #00f5ff;
+  --bg: #020617;
+  --card: rgba(255,255,255,0.05);
+}
+
 * {
   margin:0;
   padding:0;
@@ -15,11 +21,11 @@
 
 body {
   background: radial-gradient(circle at center, #020617, #000);
-  color: #e2e8f0;
+  color:white;
   overflow:hidden;
 }
 
-/* FUNDO ESTRELAS */
+/* FUNDO */
 canvas {
   position:fixed;
   top:0;
@@ -27,44 +33,44 @@ canvas {
   z-index:-1;
 }
 
-/* CONTAINER */
-.container {
+/* APP */
+.app {
   display:flex;
   flex-direction:column;
-  align-items:center;
-  justify-content:center;
   height:100vh;
 }
 
-/* CARD PRINCIPAL */
-.panel {
-  background: rgba(255,255,255,0.05);
+/* HEADER */
+.header {
+  text-align:center;
+  padding:15px;
+  font-size:20px;
+  letter-spacing:2px;
+}
+
+/* CONTEÚDO */
+.content {
+  flex:1;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.card {
+  background: var(--card);
   backdrop-filter: blur(20px);
-  border:1px solid rgba(255,255,255,0.1);
-  padding:30px;
-  border-radius:25px;
+  border-radius:20px;
+  padding:20px;
   width:320px;
   text-align:center;
-  box-shadow: 0 0 40px rgba(0,255,255,0.1);
-  animation: fadeIn 1s ease;
-}
-
-@keyframes fadeIn {
-  from {opacity:0; transform:translateY(20px);}
-  to {opacity:1;}
-}
-
-/* TÍTULO */
-h1 {
-  letter-spacing:2px;
-  margin-bottom:10px;
+  box-shadow:0 0 30px rgba(0,255,255,0.1);
 }
 
 /* TIMER */
-#tempo {
-  font-size:70px;
+.timer {
+  font-size:60px;
   margin:20px 0;
-  text-shadow:0 0 20px #0ea5e9;
+  text-shadow:0 0 20px var(--primary);
 }
 
 /* BOTÕES */
@@ -73,22 +79,41 @@ button {
   padding:10px 20px;
   border:none;
   border-radius:10px;
-  background:#0ea5e9;
-  color:white;
+  background:var(--primary);
+  color:black;
   cursor:pointer;
   transition:0.3s;
 }
 
 button:hover {
-  box-shadow:0 0 15px #0ea5e9;
-  transform:scale(1.05);
+  transform:scale(1.1);
+  box-shadow:0 0 15px var(--primary);
 }
 
-/* TEXTO */
-.status {
-  margin-top:10px;
-  font-size:14px;
-  opacity:0.8;
+/* NAV */
+.nav {
+  display:flex;
+  background:#020617;
+}
+
+.nav button {
+  flex:1;
+  background:none;
+  color:white;
+}
+
+/* LISTA */
+li {
+  padding:8px;
+  margin:5px 0;
+  background:#1e293b;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+.selected {
+  background:var(--primary);
+  color:black;
 }
 
 </style>
@@ -96,91 +121,136 @@ button:hover {
 
 <body>
 
-<canvas id="stars"></canvas>
+<canvas id="bg"></canvas>
 
-<div class="container">
-  <div class="panel">
-    <h1>🚀 MISSION CONTROL</h1>
-    <div id="tempo">25:00</div>
+<div class="app">
 
-    <button onclick="start()">Iniciar</button>
-    <button onclick="pause()">Pausar</button>
-    <button onclick="reset()">Resetar</button>
+<div class="header">🚀 NEURO FOCUS</div>
 
-    <div class="status" id="status">Sistema pronto</div>
-  </div>
+<div class="content">
+
+<div id="home" class="card">
+<div class="timer" id="time">25:00</div>
+
+<button onclick="start()">Start</button>
+<button onclick="pause()">Pause</button>
+<button onclick="reset()">Reset</button>
+
+<p id="status"></p>
+</div>
+
+<div id="tasks" class="card" style="display:none">
+<input id="taskInput" placeholder="Nova tarefa">
+<button onclick="addTask()">+</button>
+<ul id="list"></ul>
+</div>
+
+<div id="stats" class="card" style="display:none">
+<h3>📊 Dashboard</h3>
+<p>Sessões: <span id="sessions">0</span></p>
+<p>Tarefa atual: <span id="currentTask">Nenhuma</span></p>
+</div>
+
+</div>
+
+<div class="nav">
+<button onclick="show('home')">⏱️</button>
+<button onclick="show('tasks')">📋</button>
+<button onclick="show('stats')">📊</button>
+</div>
+
 </div>
 
 <script>
 // TIMER
-let time = 1500;
-let interval;
+let time=1500,interval;
+let sessions=localStorage.getItem("sessions")||0;
+let currentTask="";
+
+document.getElementById("sessions").innerText=sessions;
 
 function update(){
-  let m=Math.floor(time/60);
-  let s=time%60;
-  document.getElementById("tempo").innerText =
-    m+":"+(s<10?"0":"")+s;
+ let m=Math.floor(time/60),s=time%60;
+ document.getElementById("time").innerText=
+ m+":"+(s<10?"0":"")+s;
 }
 
 function start(){
-  if(interval) return;
-  document.getElementById("status").innerText="Missão em andamento...";
-  interval=setInterval(()=>{
-    if(time>0){
-      time--;
-      update();
-    } else {
-      clearInterval(interval);
-      interval=null;
-      document.getElementById("status").innerText="Missão concluída 🚀";
-    }
-  },1000);
+ if(interval) return;
+ document.getElementById("status").innerText=
+ "Foco: "+(currentTask||"Nenhuma");
+ interval=setInterval(()=>{
+  if(time>0){time--;update();}
+  else{
+   clearInterval(interval);
+   interval=null;
+   sessions++;
+   localStorage.setItem("sessions",sessions);
+   document.getElementById("sessions").innerText=sessions;
+   alert("Sessão concluída 🚀");
+   time=1500;
+  }
+ },1000);
 }
 
-function pause(){
-  clearInterval(interval);
-  interval=null;
-  document.getElementById("status").innerText="Pausado";
+function pause(){clearInterval(interval);interval=null;}
+function reset(){time=1500;update();pause();}
+
+// TASKS
+function addTask(){
+ let val=document.getElementById("taskInput").value;
+ let li=document.createElement("li");
+ li.textContent=val;
+
+ li.onclick=()=>{
+  currentTask=val;
+  document.getElementById("currentTask").innerText=val;
+  document.querySelectorAll("li").forEach(e=>e.classList.remove("selected"));
+  li.classList.add("selected");
+ };
+
+ document.getElementById("list").appendChild(li);
 }
 
-function reset(){
-  time=1500;
-  update();
-  pause();
+// NAV
+function show(tab){
+ ["home","tasks","stats"].forEach(t=>{
+  document.getElementById(t).style.display="none";
+ });
+ document.getElementById(tab).style.display="block";
 }
 
-// ESTRELAS ANIMADAS
-const canvas=document.getElementById("stars");
-const ctx=canvas.getContext("2d");
+// BACKGROUND
+const c=document.getElementById("bg");
+const ctx=c.getContext("2d");
 
-canvas.width=window.innerWidth;
-canvas.height=window.innerHeight;
+c.width=window.innerWidth;
+c.height=window.innerHeight;
 
 let stars=[];
-for(let i=0;i<200;i++){
-  stars.push({
-    x:Math.random()*canvas.width,
-    y:Math.random()*canvas.height,
-    r:Math.random()*2,
-    v:Math.random()*0.5
-  });
+for(let i=0;i<150;i++){
+ stars.push({
+  x:Math.random()*c.width,
+  y:Math.random()*c.height,
+  r:Math.random()*2,
+  v:Math.random()*0.5
+ });
 }
 
 function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle="white";
+ ctx.clearRect(0,0,c.width,c.height);
+ ctx.fillStyle="white";
 
-  stars.forEach(s=>{
-    s.y+=s.v;
-    if(s.y>canvas.height) s.y=0;
+ stars.forEach(s=>{
+  s.y+=s.v;
+  if(s.y>c.height)s.y=0;
 
-    ctx.beginPath();
-    ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
-    ctx.fill();
-  });
+  ctx.beginPath();
+  ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+  ctx.fill();
+ });
 
-  requestAnimationFrame(draw);
+ requestAnimationFrame(draw);
 }
 
 draw();
