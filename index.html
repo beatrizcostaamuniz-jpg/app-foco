@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Focus Master</title>
+<title>Focus Master PRO</title>
 
 <style>
 body {
@@ -51,14 +51,14 @@ input {
 
 li {
   margin: 5px 0;
+  cursor: pointer;
 }
-
 </style>
 </head>
 
 <body>
 
-<h1>🚀 Focus Master</h1>
+<h1>🚀 Focus Master PRO</h1>
 
 <div class="card">
   <h2>⏱️ Pomodoro</h2>
@@ -66,7 +66,9 @@ li {
   <button class="start" onclick="start()">Começar</button>
   <button class="pause" onclick="pause()">Pausar</button>
   <button class="reset" onclick="reset()">Resetar</button>
+
   <p id="modo"></p>
+  <p>🎯 Foco atual: <strong id="tarefaAtual">Nenhuma</strong></p>
 </div>
 
 <div class="card">
@@ -85,7 +87,7 @@ li {
 
 <div class="card">
   <h2>📊 Progresso</h2>
-  <p>Sessões: <span id="sessoes">0</span></p>
+  <p>Sessões concluídas: <span id="sessoes">0</span></p>
 </div>
 
 <audio id="som">
@@ -96,6 +98,7 @@ li {
 let tempo = 1500;
 let intervalo;
 let modo = "foco";
+let tarefaSelecionada = "";
 
 let sessoes = localStorage.getItem("sessoes") || 0;
 document.getElementById("sessoes").innerText = sessoes;
@@ -110,6 +113,9 @@ function atualizar() {
 
 function start(){
   if(intervalo) return;
+
+  document.getElementById("modo").innerText =
+    "Focando em: " + (tarefaSelecionada || "Nenhuma");
 
   intervalo = setInterval(()=>{
     if(tempo>0){
@@ -146,6 +152,7 @@ function reset(){
   modo="foco";
   atualizar();
   pause();
+  document.getElementById("modo").innerText="";
 }
 
 // TAREFAS
@@ -155,10 +162,19 @@ function addTask(){
 
   let li=document.createElement("li");
   li.textContent=input.value;
-  lista.appendChild(li);
 
+  li.onclick=function(){
+    selecionarTarefa(li.textContent);
+  };
+
+  lista.appendChild(li);
   salvarTarefas();
   input.value="";
+}
+
+function selecionarTarefa(tarefa){
+  tarefaSelecionada=tarefa;
+  document.getElementById("tarefaAtual").innerText=tarefa;
 }
 
 function salvarTarefas(){
@@ -174,6 +190,9 @@ function carregarTarefas(){
   tarefas.forEach(t=>{
     let li=document.createElement("li");
     li.textContent=t;
+    li.onclick=function(){
+      selecionarTarefa(t);
+    };
     document.getElementById("lista").appendChild(li);
   });
 }
