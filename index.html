@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mission Control PRO</title>
+<title>Focus X</title>
 
 <style>
 body {
@@ -26,13 +26,13 @@ body {
   border-radius:15px;
 }
 
-/* TIMER */
+h2 {margin-bottom:10px;}
+
 #tempo {
   font-size:50px;
   text-align:center;
 }
 
-/* BOTÕES */
 button {
   padding:8px;
   margin:5px;
@@ -44,7 +44,6 @@ button {
 .pause{background:#facc15;}
 .reset{background:#ef4444;}
 
-/* MISSÕES */
 .mission {
   padding:10px;
   margin:5px 0;
@@ -79,7 +78,7 @@ button {
 
 <!-- TIMER -->
 <div id="home" class="card">
-<h2>⏱️ Sistema de Foco</h2>
+<h2>⏱️ Foco</h2>
 <div id="tempo">25:00</div>
 
 <button class="start" onclick="start()">Start</button>
@@ -102,9 +101,14 @@ button {
 <!-- DASHBOARD -->
 <div id="dashboard" class="card" style="display:none">
 <h2>📊 Dashboard</h2>
-<p>Total de sessões: <span id="sessions">0</span></p>
-<p>Missão ativa: <span id="currentMission">Nenhuma</span></p>
+
+<p>Sessões: <span id="sessions">0</span></p>
+<p>XP: <span id="xp">0</span></p>
+<p>Nível: <span id="level">1</span></p>
+<p>Streak: <span id="streak">0</span> dias 🔥</p>
 <p>Missões concluídas: <span id="doneCount">0</span></p>
+<p>Missão atual: <span id="currentMission">Nenhuma</span></p>
+
 </div>
 
 </div>
@@ -117,12 +121,20 @@ button {
 </div>
 
 <script>
-// TIMER
+// =================== TIMER ===================
 let time=1500,interval;
-let sessions=localStorage.getItem("sessions")||0;
-let currentMission="";
+
+let sessions=+localStorage.getItem("sessions")||0;
+let xp=+localStorage.getItem("xp")||0;
+let level=+localStorage.getItem("level")||1;
+let streak=+localStorage.getItem("streak")||0;
+
+let lastDay=localStorage.getItem("lastDay")||"";
 
 document.getElementById("sessions").innerText=sessions;
+document.getElementById("xp").innerText=xp;
+document.getElementById("level").innerText=level;
+document.getElementById("streak").innerText=streak;
 
 function update(){
  let m=Math.floor(time/60),s=time%60;
@@ -134,20 +146,38 @@ function start(){
  if(interval)return;
 
  document.getElementById("status").innerText=
- "Executando: "+(currentMission||"Nenhuma");
+ "Missão: "+(currentMission||"Nenhuma");
 
  interval=setInterval(()=>{
-  if(time>0){time--;update();}
-  else{
-   clearInterval(interval);
-   interval=null;
+  if(time>0){
+    time--;
+    update();
+  } else {
+    clearInterval(interval);
+    interval=null;
 
-   sessions++;
-   localStorage.setItem("sessions",sessions);
-   document.getElementById("sessions").innerText=sessions;
+    sessions++;
+    xp+=10;
 
-   marcarConcluida();
-   time=1500;
+    if(xp>=level*50){
+      xp=0;
+      level++;
+    }
+
+    checkStreak();
+
+    localStorage.setItem("sessions",sessions);
+    localStorage.setItem("xp",xp);
+    localStorage.setItem("level",level);
+    localStorage.setItem("streak",streak);
+
+    document.getElementById("sessions").innerText=sessions;
+    document.getElementById("xp").innerText=xp;
+    document.getElementById("level").innerText=level;
+    document.getElementById("streak").innerText=streak;
+
+    marcarConcluida();
+    time=1500;
   }
  },1000);
 }
@@ -155,13 +185,23 @@ function start(){
 function pause(){clearInterval(interval);interval=null;}
 function reset(){time=1500;update();pause();}
 
-// MISSÕES
+// =================== STREAK ===================
+function checkStreak(){
+ let today=new Date().toDateString();
+
+ if(lastDay!==today){
+   streak++;
+   localStorage.setItem("lastDay",today);
+ }
+}
+
+// =================== MISSÕES ===================
 let missions=JSON.parse(localStorage.getItem("missions")||"[]");
+let currentMission="";
 
 function renderMissions(){
  let container=document.getElementById("missionList");
  container.innerHTML="";
-
  let done=0;
 
  missions.forEach((m,i)=>{
@@ -188,7 +228,6 @@ function renderMissions(){
 
 function addMission(){
  let val=document.getElementById("missionInput").value;
-
  missions.push({nome:val,status:""});
  save();
  renderMissions();
@@ -205,7 +244,7 @@ function save(){
  localStorage.setItem("missions",JSON.stringify(missions));
 }
 
-// NAV
+// =================== NAV ===================
 function show(tab){
  ["home","missions","dashboard"].forEach(t=>{
   document.getElementById(t).style.display="none";
